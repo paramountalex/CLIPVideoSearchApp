@@ -147,8 +147,7 @@ def fetchTopKClips(_video_embeddings, _text_embedding, _k, _frames):
 def main():
     st.header('Video Search App')
 
-    folder_path = ('/Users/alexander.johnson/Downloads/'
-                   + 'Test_Videos/')
+    folder_path = ('/FOLDER/PATH/HERE/')
     threshold = 0.4
     frames, video_embeddings = extractFolderClips(folder_path, threshold)
 

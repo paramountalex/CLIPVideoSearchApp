@@ -70,7 +70,7 @@ def fetchTopK(_video_embeddings, _text_embedding, _k, _frames):
 def main():
     st.header('Image Search App')
 
-    folder_path = '/Users/alexander.johnson/Downloads/Test_Videos'
+    folder_path = '/FOLDER/PATH/HERE/'
     frames, video_embeddings = extractFolder(folder_path)
 
     search_term = st.text_input('Search: ')
