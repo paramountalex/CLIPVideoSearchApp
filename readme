@@ -1,0 +1,22 @@
+Run using:
+
+```
+virtualenv .venv && source .venv/bin/activate && pip install -r requirements.txt
+```
+
+Apps run via:
+
+```
+streamlit run FILE_NAME
+```
+
+File purposes:
+
+- embeds.py - creates vector embeddings for the frames and text using CLIP
+- extract_scenes.py - WORK IN PROGRESS - seeking to split video files into scenes, and embed frame level data for each scene
+- extractFrames.py - takes in video files, exports array of frames
+- topFrameMultipleVideo.py - produces a jpeg of the top matching frame from a folder of videos, command line UI
+- topFrameSingleVideo.py - produces jpeg of the top matching frame from a single video, command line UI
+- topKClipApp.py - WORK IN PROGRESS - streamlit app, seeking to provide video clips with the highest average score
+- topKFrameApp.py - streamlit app, returns the top k frames across all videos in a folder
+- VideoSearchApp.py - WORK IN PROGRESS - streamlit app, trying to provide clips and store data in a vector database, also attempting to thread the embeds to speed up
