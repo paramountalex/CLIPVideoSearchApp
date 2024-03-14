@@ -161,7 +161,6 @@ def build_search_tab(tab2):
             shown = []
             col1, col2, col3 = st.columns(3)
             for result in results:
-                print(result['filename'], result['shot'], result['_distance'])
                 if [result['filename'], result['shot']] not in shown \
                    and len(shown) < 15:
                     print(result['filename'], result['shot'],
