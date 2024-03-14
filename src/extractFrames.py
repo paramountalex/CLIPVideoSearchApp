@@ -33,6 +33,8 @@ def extract_frames(video_path):
         # Increment the frame counter
         count += 1
 
+    vidcap.release()
+
     # Return the list of extracted frames
     return frames
 
@@ -55,6 +57,8 @@ def extract_all_frames(video_path):
 
         # Read the next frame from the video
         success, image = vidcap.read()
+
+    vidcap.release()
 
     # Return the list of extracted frames
     return frames

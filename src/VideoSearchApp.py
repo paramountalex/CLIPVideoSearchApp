@@ -6,10 +6,10 @@ import subprocess
 import cv2
 import threading
 import lancedb
-from lancedb.pydantic import LanceModel, Vector
+from lancedb.pydantic import Vector, LanceModel
 from embeds import embed_text, embed_frames
-from extractFrames import extract_frames
-from streamlit.runtime.scriptrunner import add_script_run_ctx
+from extractFrames import extract_all_frames
+# from streamlit.runtime.scriptrunner import add_script_run_ctx
 
 
 # Load the CLIP model
@@ -26,9 +26,15 @@ class Frame(LanceModel):
 
 
 # Create or connect to the database
-db = lancedb.connect("./data/db")
-table = db.create_table("videos", schema=Frame,
-                        exist_ok=True)
+@st.cache_resource
+def connect_db():
+    db = lancedb.connect("./data/db")
+    table = db.create_table("videos", schema=Frame,
+                            mode="overwrite")
+    return table
+
+
+table = connect_db()
 
 
 def search_videos(query):
@@ -37,10 +43,13 @@ def search_videos(query):
     # Embed the query
     text_embedding = embed_text(query)
 
-    text_embedding = text_embedding.cpu().numpy().tolist()[0]
-
+    text_embedding = text_embedding.detach().cpu().numpy()[0].tolist()
     # Get the video embeddings from the database
-    results = table.search(text_embedding).to_list()
+    results = table.search(text_embedding)\
+                   .metric("cosine")\
+                   .limit(500)\
+                   .to_list()
+    print(f'found {len(results)} videos with {query}')
     return results
 
 
@@ -52,7 +61,7 @@ def get_shot(frame, scene_changes):
 
 
 @st.cache_data
-def embed_video(video_path, threshold=0.4):
+def embed_video(video_path, threshold=0.3):
     # use ffmpeg to get scene change frames
     # Define the FFmpeg command for scene detection
     # filters scene changes in threshold, showinfo shows frame
@@ -87,19 +96,23 @@ def embed_video(video_path, threshold=0.4):
 
     frame_rate = vidcap.get(cv2.CAP_PROP_FPS)
 
+    vidcap.release()
+
     print(f'extracting frames for {video_path}...')
 
     # index all frames
-    frames = extract_frames(video_path)
+    frames = extract_all_frames(video_path)
     print(f'embedding frames for {video_path}...')
     embeds = embed_frames(frames)
     embeds = embeds.cpu().numpy().tolist()
-
+    frame_list = []
     for i, embedding in enumerate(embeds):
         frame = Frame(vector=embedding[0], filename=video_path,
-                      timestamp=round(i//frame_rate),
+                      timestamp=round(i/frame_rate),
                       shot=get_shot(i, scene_changes))
-        table.add([frame])
+        frame_list.append(frame)
+    print(f'adding {len(frame_list)} frames to the database...')
+    table.add(frame_list)
 
     print(f'finished working on {video_path}')
 
@@ -114,16 +127,26 @@ def build_upload_tab(tab1):
         if st.button("Upload"):
 
             folder = os.listdir(folder_path)
-
+            bar = st.progress(0)
+            # threads = []
             for video in folder:
                 if '.mp4' not in video:
                     continue
                 file = os.path.join(folder_path, video)
+                bar.progress((folder.index(video) + 1)/len(folder))
+                embed_video(file)
+                # thread = threading.Thread(target=embed_video,
+                #                          args=[file])
+                # threads.append(thread)
+                # add_script_run_ctx(thread)
+                # thread.start()
+                # print(f'started thread for {file}')
 
-                thread = threading.Thread(target=embed_video, args=[file])
-                add_script_run_ctx(thread)
-                thread.start()
-                print(f'started thread for {file}')
+            # while threads:
+                # threads = [t for t in threads if t.is_alive()]
+                # bar.progress((len(folder) - len(threads))/len(folder))
+
+            bar.empty()
 
     return
 
@@ -132,14 +155,17 @@ def build_search_tab(tab2):
     with tab2:
         st.write("Search for Videos")
         query = st.text_input("Enter a search query")
-        if st.button("Search"):
+        if query:
             results = search_videos(query)
             # Display the results
             shown = []
             col1, col2, col3 = st.columns(3)
             for result in results:
-                print(result['filename'], result['shot'])
-                if [result['filename'], result['shot']] not in shown:
+                print(result['filename'], result['shot'], result['_distance'])
+                if [result['filename'], result['shot']] not in shown \
+                   and len(shown) < 15:
+                    print(result['filename'], result['shot'],
+                          result['timestamp'])
                     if len(shown) % 3 == 0:
                         with col1:
                             st.video(result['filename'],
@@ -157,14 +183,22 @@ def build_search_tab(tab2):
                             shown.append([result['filename'], result['shot']])
 
 
+def build_data_tab(tab3):
+    with tab3:
+        st.write("Database")
+        data = table.to_pandas()
+        st.write(data)
+
+
 def main():
     st.title("Video Search App")
     st.write("Welcome to the Video Search App." +
              " You can search for videos using text queries.")
-    tab1, tab2 = st.tabs(["Upload", "Search"])
+    tab1, tab2, tab3 = st.tabs(["Upload", "Search", "Database"])
 
     build_upload_tab(tab1)
     build_search_tab(tab2)
+    build_data_tab(tab3)
 
     return
 
