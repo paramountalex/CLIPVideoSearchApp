@@ -163,8 +163,6 @@ def build_search_tab(tab2):
             for result in results:
                 if [result['filename'], result['shot']] not in shown \
                    and len(shown) < 15:
-                    print(result['filename'], result['shot'],
-                          result['timestamp'])
                     if len(shown) % 3 == 0:
                         with col1:
                             st.video(result['filename'],
