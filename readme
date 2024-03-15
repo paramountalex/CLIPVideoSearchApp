@@ -19,4 +19,4 @@ File purposes:
 - topFrameSingleVideo.py - produces jpeg of the top matching frame from a single video, command line UI
 - topKClipApp.py - WORK IN PROGRESS - streamlit app, seeking to provide video clips with the highest average score
 - topKFrameApp.py - streamlit app, returns the top k frames across all videos in a folder
-- VideoSearchApp.py - WORK IN PROGRESS - streamlit app, trying to provide clips and store data in a vector database, also attempting to thread the embeds to speed up
+- VideoSearchApp.py - streamlit app, trying to provide clips and store data in a vector database
