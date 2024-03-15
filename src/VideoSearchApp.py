@@ -14,7 +14,7 @@ from extractFrames import extract_all_frames
 
 # Load the CLIP model
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/32", device=device)
+model, preprocess = clip.load("ViT-L/14", device=device)
 
 
 # Define the database schema
@@ -49,7 +49,6 @@ def search_videos(query):
                    .metric("cosine")\
                    .limit(500)\
                    .to_list()
-    print(f'found {len(results)} videos with {query}')
     return results
 
 
@@ -60,7 +59,6 @@ def get_shot(frame, scene_changes):
     return len(scene_changes)
 
 
-@st.cache_data
 def embed_video(video_path, threshold=0.3):
     # use ffmpeg to get scene change frames
     # Define the FFmpeg command for scene detection
@@ -161,8 +159,8 @@ def build_search_tab(tab2):
             shown = []
             col1, col2, col3 = st.columns(3)
             for result in results:
-                if [result['filename'], result['shot']] not in shown \
-                   and len(shown) < 15:
+                if ([result['filename'], result['shot']] not in shown
+                   and len(shown) < 15):
                     if len(shown) % 3 == 0:
                         with col1:
                             st.video(result['filename'],
