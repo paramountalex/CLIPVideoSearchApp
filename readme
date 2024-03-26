@@ -10,6 +10,8 @@ Apps run via:
 streamlit run FILE_NAME
 ```
 
+Video Search App is the primary app, with building blocks along the way also in the repo!
+
 File purposes:
 
 - embeds.py - creates vector embeddings for the frames and text using CLIP
